@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Clone repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Pandoc
         uses: r-lib/actions/setup-pandoc@v2
@@ -95,7 +95,7 @@ jobs:
         shell: cmd
 
       - name: Upload bundles
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 5
@@ -116,7 +116,7 @@ jobs:
 
     steps:
       - name: Clone repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Pandoc
         uses: r-lib/actions/setup-pandoc@v2
@@ -143,6 +143,10 @@ jobs:
         run: |
           sed -i 's|# finished base|cp $OLDPWD/install-tl-unx.tar.gz tools/; Rscript tools/clean-tlpdb.R; tar zcf TinyTeX-0.tar.gz -C ~ .TinyTeX|' tools/install-unx.sh
           ./tools/install-unx.sh
+          # tlmgr path add will add in this folder which is not on PATH by default
+          # (can be checked with tlmgr options sys_bin)
+          echo "$HOME/bin" >> $GITHUB_PATH
+          ls -lisa "$HOME/bin"
 
       - name: Build TinyTeX-1.zip with new package installed
         run: |
@@ -171,13 +175,6 @@ jobs:
           echo "tlmgr install $(cat pkgs-custom.txt | tr '\n' ' ')" >> install.sh
           tar zcf ../installer-unix.tar.gz install-tl-unx.tar.gz tinytex.profile install.sh
 
-      - name: Test Installation script
-        env:
-          TINYTEX_INSTALLER: TinyTeX-0
-        run: ./tools/install-bin-unix.sh
-
-      - run: ls -lisa
-
       - name: Get Version information for daily build
         id: tlmgr-version
         run: |
@@ -185,10 +182,17 @@ jobs:
           ~/bin/tlmgr version | sed -n '1p;3p' >> $GITHUB_OUTPUT
           echo "EOFTLMGR" >> $GITHUB_OUTPUT
 
+      - name: Test Installation script
+        env:
+          TINYTEX_INSTALLER: TinyTeX-0
+        run: ./tools/install-bin-unix.sh
+
+      - run: ls -lisa
+
       - name: Upload bundles
         # this specific action is used at some issues have been observe with gh while uploading assets
         # This allows to not fail the workflow on upload, but retry a few time
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 5
@@ -207,7 +211,7 @@ jobs:
 
     steps:
       - name: Clone repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Pandoc
         uses: r-lib/actions/setup-pandoc@v2
@@ -259,9 +263,11 @@ jobs:
       - run: ls -lisa
 
       - name: Upload bundles
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
+        env:
+          GH_DEBUG: api
         with:
-          timeout_minutes: 5
+          timeout_minutes: 10
           max_attempts: 5
           retry_wait_seconds: 10
           command: |
@@ -284,13 +290,13 @@ jobs:
         working-directory: tinitex
         run: |
           7z a -o.. tinitex.zip x86_64-pc-windows-msvc/.
-          7z a -ttar -so tinitex.tar x86_64-apple-darwin/. | 7z a -si -o.. tinitex.tgz
+          7z a -ttar -so tinitex.tar aarch64-apple-darwin/. | 7z a -si -o.. tinitex.tgz
           7z a -ttar -so tinitex.tar x86_64-unknown-linux-gnu/. | 7z a -si -o.. tinitex.tar.gz
 
       - run: ls -lisa tinitex
 
       - name: Upload bundles
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 5
           max_attempts: 5

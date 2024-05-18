@@ -8,6 +8,7 @@ babel
 bibtex
 bigintcalc
 bitset
+bookmark
 booktabs
 cm
 ctablestack
@@ -15,12 +16,12 @@ dehyph
 dvipdfmx
 dvips
 ec
+epstopdf
 epstopdf-pkg
 etex
 etexcmds
 etoolbox
 euenc
-everyshi
 fancyvrb
 filehook
 firstaid
